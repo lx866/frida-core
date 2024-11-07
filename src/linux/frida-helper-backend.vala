@@ -3333,8 +3333,12 @@ namespace Frida {
 			var iter = MapsIter.for_pid (pid);
 			while (iter.next ()) {
 				string candidate_path = iter.path;
-				if (candidate_path == path)
+				if (candidate_path == path){
+					if (candidate_path.contains("libc.so") && iter.flags.get(3) == 's'){
+						continue;
+					}
 					return new ProcMapsEntry (iter.start_address, candidate_path, iter.identity);
+				}
 			}
 
 			return null;
@@ -3357,15 +3361,21 @@ namespace Frida {
 				}
 			}
 
+			public string flags{
+				owned get{
+					return info.fetch(3);
+				}
+			}
+
 			public string identity {
 				owned get {
-					return info.fetch (3);
+					return info.fetch (4);
 				}
 			}
 
 			public string path {
 				owned get {
-					return info.fetch (4);
+					return info.fetch (5);
 				}
 			}
 
@@ -3380,7 +3390,7 @@ namespace Frida {
 					return;
 				}
 
-				if (!/^([0-9a-f]+)-([0-9a-f]+) \S{4} [0-9a-f]+ ([0-9a-f]{2,}:[0-9a-f]{2,} \d+) +([^\n]+)$/m.match (contents,
+				if (!/^([0-9a-f]+)-([0-9a-f]+) (\S{4}) [0-9a-f]+ ([0-9a-f]{2,}:[0-9a-f]{2,} \d+) +([^\n]+)$/m.match (contents,
 						0, out info)) {
 					assert_not_reached ();
 				}
